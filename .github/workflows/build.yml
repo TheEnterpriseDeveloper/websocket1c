@@ -1,0 +1,44 @@
+name: Build Websocket1C
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for all platforms
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Install cross and cargo-make
+        run: |
+          cargo install cross
+          cargo install cargo-make
+
+      - name: Add targets
+        run: |
+          rustup target add \
+            x86_64-pc-windows-gnu \
+            i686-pc-windows-gnu \
+            x86_64-unknown-linux-gnu \
+            i686-unknown-linux-gnu
+
+      - name: Build for all targets
+        run: cargo make pack
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Websocket1CAddIn
+          path: out/Websocket1CAddIn.zip
