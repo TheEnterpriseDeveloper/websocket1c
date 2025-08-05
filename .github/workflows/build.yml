@@ -7,26 +7,38 @@ on:
 
 jobs:
   build:
-    name: Build for all platforms
+    name: Build DLLs and SOs for all targets
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y \
+            zip \
+            gcc-multilib \
+            g++-multilib \
+            libc6-dev-i386 \
+            libgcc-13-dev:i386 \
+            mingw-w64 \
+            libssl-dev
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-          components: rustfmt
 
       - name: Install cross and cargo-make
         run: |
           cargo install cross
           cargo install cargo-make
 
-      - name: Add targets
+      - name: Add required targets
         run: |
           rustup target add \
             x86_64-pc-windows-gnu \
@@ -34,10 +46,10 @@ jobs:
             x86_64-unknown-linux-gnu \
             i686-unknown-linux-gnu
 
-      - name: Build for all targets
+      - name: Run cargo make pack
         run: cargo make pack
 
-      - name: Upload zip artifact
+      - name: Upload built archive
         uses: actions/upload-artifact@v4
         with:
           name: Websocket1CAddIn
